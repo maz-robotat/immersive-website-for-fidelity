@@ -110,6 +110,15 @@ function formatDate(value: string) {
   }
 }
 
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0 },
+};
+
 export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,37 +151,32 @@ export default function Blog() {
 
   const categories = [
     "All",
-    ...Array.from(new Set(posts.map((p) => p.category))).filter(Boolean),
+    ...Array.from(new Set(posts.map((p) => p.category))),
   ];
 
-  const filtered = posts.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     const matchesCategory =
       activeCategory === "All" || post.category === activeCategory;
-    const q = query.trim().toLowerCase();
     const matchesQuery =
-      !q ||
-      post.title.toLowerCase().includes(q) ||
-      post.excerpt.toLowerCase().includes(q) ||
-      post.author.toLowerCase().includes(q);
+      query.trim() === "" ||
+      post.title.toLowerCase().includes(query.toLowerCase()) ||
+      post.excerpt.toLowerCase().includes(query.toLowerCase()) ||
+      post.author.toLowerCase().includes(query.toLowerCase());
     return matchesCategory && matchesQuery;
   });
 
-  const featured = filtered[0];
-  const rest = filtered.slice(1);
-
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="mx-auto w-full max-w-[1200px] px-4 py-8 md:px-6 md:py-12"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="mx-auto w-full max-w-[1200px] px-4 py-10 md:px-8"
     >
       <PageHeader
-        title="Insights & Articles"
-        subtitle="Expert perspectives on finance audits, compliance, and risk management."
+        title="Insights & Resources"
+        subtitle="Practical guidance, industry insights, and expert perspectives on audit, tax, and risk advisory."
       />
 
-      {/* Controls */}
       <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -185,173 +189,102 @@ export default function Blog() {
         </div>
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
-            <Badge
+            <Button
               key={cat}
-              variant={activeCategory === cat ? "default" : "secondary"}
+              variant={activeCategory === cat ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveCategory(cat)}
-              className="cursor-pointer select-none px-3 py-1 transition-transform active:scale-95"
             >
               {cat}
-            </Badge>
+            </Button>
           ))}
         </div>
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {loading ? (
+        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="overflow-hidden shadow-sm">
-              <Skeleton className="h-40 w-full" />
+            <Card key={i} className="shadow-sm">
               <CardHeader className="space-y-3">
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-20" />
                 <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-3/4" />
               </CardHeader>
+              <CardContent>
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-4 w-24" />
+              </CardFooter>
             </Card>
           ))}
         </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && filtered.length === 0 && (
-        <div className="mt-16 flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <FileText className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h3 className="mt-4 text-lg font-semibold">No content available</h3>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            We couldn't find any articles matching your search. Try adjusting
-            your filters or reload the page.
-          </p>
-          <Button
-            onClick={() => {
-              setQuery("");
-              setActiveCategory("All");
-              loadPosts();
-            }}
-            className="mt-6 transition-transform active:scale-95"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Retry
-          </Button>
-        </div>
-      )}
-
-      {/* Content */}
-      {!loading && filtered.length > 0 && (
-        <div className="mt-8 space-y-8">
-          {/* Featured post */}
-          {featured && (
-            <motion.div
-              whileHover={{ y: -4 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      ) : filteredPosts.length === 0 ? (
+        <Card className="mt-8 shadow-sm">
+          <CardContent className="flex flex-col items-center gap-4 p-16 text-center">
+            <FileText className="h-10 w-10 text-muted-foreground" />
+            <p className="text-lg font-medium text-muted-foreground">
+              No articles found
+            </p>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                setQuery("");
+                setActiveCategory("All");
+                loadPosts();
+              }}
             >
-              <Card className="overflow-hidden shadow-sm md:grid md:grid-cols-2">
-                <div className="flex h-48 items-center justify-center bg-gradient-to-br from-primary/90 to-accent text-primary-foreground md:h-full">
-                  <FileText className="h-16 w-16 opacity-80" />
-                </div>
-                <div className="flex flex-col">
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <Badge>{featured.category}</Badge>
-                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Featured
-                      </span>
-                    </div>
-                    <CardTitle className="mt-2 text-2xl">
-                      {featured.title}
-                    </CardTitle>
-                    <CardDescription className="mt-2 text-base">
-                      {featured.excerpt}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="mt-auto">
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        {featured.author}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <CalendarDays className="h-4 w-4" />
-                        {formatDate(featured.published_at)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {featured.read_time}
-                      </span>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="transition-transform active:scale-95">
-                      Read article
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CardFooter>
-                </div>
+              <RefreshCw className="h-4 w-4" />
+              Reset
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {filteredPosts.map((post) => (
+            <motion.div key={post.id} variants={item}>
+              <Card className="flex h-full flex-col shadow-sm transition-shadow hover:shadow-md">
+                <CardHeader className="space-y-3">
+                  <Badge variant="secondary" className="w-fit">
+                    {post.category}
+                  </Badge>
+                  <CardTitle className="text-lg leading-snug">
+                    {post.title}
+                  </CardTitle>
+                  <CardDescription className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      {post.author}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="h-3 w-3" />
+                      {formatDate(post.published_at)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {post.read_time}
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <p className="text-sm text-muted-foreground">{post.excerpt}</p>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="link" className="gap-1 px-0">
+                    Read more
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardFooter>
               </Card>
             </motion.div>
-          )}
-
-          {/* Grid of posts */}
-          {rest.length > 0 && (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {rest.map((post, idx) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  whileHover={{ y: -6 }}
-                >
-                  <Card className="flex h-full flex-col overflow-hidden shadow-sm transition-shadow hover:shadow-md">
-                    <div className="flex h-36 items-center justify-center bg-muted">
-                      <FileText className="h-10 w-10 text-muted-foreground/50" />
-                    </div>
-                    <CardHeader>
-                      <Badge variant="secondary" className="w-fit">
-                        {post.category}
-                      </Badge>
-                      <CardTitle className="mt-2 text-lg leading-snug">
-                        {post.title}
-                      </CardTitle>
-                      <CardDescription className="mt-1 line-clamp-3">
-                        {post.excerpt}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="mt-auto">
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <User className="h-3.5 w-3.5" />
-                          {post.author}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {post.read_time}
-                        </span>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex items-center justify-between border-t pt-4">
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {formatDate(post.published_at)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="transition-transform active:scale-95"
-                      >
-                        Read
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
+          ))}
+        </motion.div>
       )}
     </motion.div>
   );
