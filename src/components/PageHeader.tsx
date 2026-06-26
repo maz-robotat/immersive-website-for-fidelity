@@ -11,13 +11,13 @@ export function PageHeader({ title, subtitle }: PageHeaderProps) {
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="space-y-2"
+      className="space-y-3"
     >
-      <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+      <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground break-words">
         {title}
       </h1>
       {subtitle && (
-        <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl break-words">
           {subtitle}
         </p>
       )}
